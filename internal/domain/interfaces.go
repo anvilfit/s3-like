@@ -38,7 +38,7 @@ type ObjectRepository interface {
 type AuthUseCase interface {
 	Login(username, password string) (*AuthResponse, error)
 	Register(req *RegisterRequest) (*AuthResponse, error)
-	ValidateToken(token string) (*User, error)
+	ValidateToken(token string) (*uuid.UUID, error)
 }
 
 type BucketUseCase interface {
@@ -49,7 +49,7 @@ type BucketUseCase interface {
 }
 
 type ObjectUseCase interface {
-	UploadObject(bucketID uuid.UUID, key string, file multipart.File, header *multipart.FileHeader) (*UploadObjectResponse, error)
+	UploadObject(bucketID uuid.UUID, key string, file multipart.File, header *multipart.FileHeader, metadata map[string]string) (*UploadObjectResponse, error)
 	GetObject(bucketID uuid.UUID, key string) (*Object, io.ReadCloser, error)
 	GetObjectVersion(bucketID uuid.UUID, key, versionID string) (*Object, io.ReadCloser, error)
 	ListObjects(bucketID uuid.UUID, prefix string, page, pageSize int) (*ListObjectsResponse, error)

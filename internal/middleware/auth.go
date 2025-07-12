@@ -18,24 +18,16 @@ func JWTAuth(jwtSecret string) gin.HandlerFunc {
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header format"})
-			c.Abort()
-			return
-		}
 
-		// Create a temporary auth use case for token validation
-		// In a real application, you might want to inject this differently
 		authUseCase := usecase.NewAuthUseCase(nil, jwtSecret)
-		user, err := authUseCase.ValidateToken(tokenString)
+		userID, err := authUseCase.ValidateToken(tokenString)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			c.Abort()
 			return
 		}
 
-		c.Set("user_id", user.ID)
-		c.Set("user", user)
+		c.Set("user_id", *userID)
 		c.Next()
 	}
 }

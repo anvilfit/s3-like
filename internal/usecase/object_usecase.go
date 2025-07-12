@@ -2,12 +2,14 @@ package usecase
 
 import (
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
 	"path/filepath"
 	"s3-like/internal/domain"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -24,7 +26,7 @@ func NewObjectUseCase(objectRepo domain.ObjectRepository, basePath string) domai
 	}
 }
 
-func (uc *objectUseCase) UploadObject(bucketID uuid.UUID, key string, file multipart.File, header *multipart.FileHeader) (*domain.UploadObjectResponse, error) {
+func (uc *objectUseCase) UploadObject(bucketID uuid.UUID, key string, file multipart.File, header *multipart.FileHeader, metadata map[string]string) (*domain.UploadObjectResponse, error) {
 	// Generate version ID
 	versionID := uuid.New().String()
 
@@ -52,6 +54,47 @@ func (uc *objectUseCase) UploadObject(bucketID uuid.UUID, key string, file multi
 
 	etag := fmt.Sprintf("%x", hasher.Sum(nil))
 
+	// Prepare metadata JSON
+	var metadataJSON string
+	if metadata != nil && len(metadata) > 0 {
+		// Add system metadata
+		systemMetadata := make(map[string]interface{})
+		for k, v := range metadata {
+			systemMetadata[k] = v
+		}
+
+		// Add automatic metadata
+		systemMetadata["upload_time"] = time.Now().UTC().Format(time.RFC3339)
+		systemMetadata["original_filename"] = header.Filename
+		systemMetadata["file_size"] = size
+		systemMetadata["content_type"] = header.Header.Get("Content-Type")
+
+		metadataBytes, err := json.Marshal(systemMetadata)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal metadata: %w", err)
+		}
+		metadataJSON = string(metadataBytes)
+	} else {
+		// Default metadata if none provided
+		defaultMetadata := map[string]interface{}{
+			"upload_time":       time.Now().UTC().Format(time.RFC3339),
+			"original_filename": header.Filename,
+			"file_size":         size,
+			"content_type":      header.Header.Get("Content-Type"),
+		}
+		metadataBytes, err := json.Marshal(defaultMetadata)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal default metadata: %w", err)
+		}
+		metadataJSON = string(metadataBytes)
+	}
+
+	// Determine content type
+	contentType := header.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
 	// Mark previous versions as not latest
 	uc.objectRepo.MarkAsNotLatest(bucketID, key)
 
@@ -61,10 +104,11 @@ func (uc *objectUseCase) UploadObject(bucketID uuid.UUID, key string, file multi
 		BucketID:    bucketID,
 		VersionID:   versionID,
 		Size:        size,
-		ContentType: header.Header.Get("Content-Type"),
+		ContentType: contentType,
 		ETag:        etag,
 		StoragePath: storagePath,
 		IsLatest:    true,
+		Metadata:    metadataJSON,
 	}
 
 	if err := uc.objectRepo.Create(object); err != nil {

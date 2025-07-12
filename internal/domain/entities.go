@@ -52,20 +52,20 @@ type ObjectVersion struct {
 
 // Request/Response DTOs
 type CreateBucketRequest struct {
-	Name       string `json:"name" binding:"required"`
-	Public     bool   `json:"public"`
-	Versioning bool   `json:"versioning"`
+	Name       string `json:"name" binding:"required" example:"bucket-example"`
+	Public     bool   `json:"public" example:"true"`
+	Versioning bool   `json:"versioning" example:"true"`
 }
 
 type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username string `json:"username" binding:"required" example:"johndoe"`
+	Password string `json:"password" binding:"required" example:"pass123"`
 }
 
 type RegisterRequest struct {
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
+	Username string `json:"username" binding:"required" example:"johndoe"`
+	Email    string `json:"email" binding:"required,email" example:"johndoe@example.com"`
+	Password string `json:"password" binding:"required,min=6" example:"pass123"`
 }
 
 type AuthResponse struct {

@@ -1,0 +1,640 @@
+basePath: /
+definitions:
+  domain.AuthResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/domain.User'
+    type: object
+  domain.Bucket:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      public:
+        type: boolean
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/domain.User'
+      user_id:
+        type: string
+      versioning:
+        type: boolean
+    type: object
+  domain.CreateBucketRequest:
+    properties:
+      name:
+        example: bucket-example
+        type: string
+      public:
+        example: true
+        type: boolean
+      versioning:
+        example: true
+        type: boolean
+    required:
+    - name
+    type: object
+  domain.ListObjectsResponse:
+    properties:
+      objects:
+        items:
+          $ref: '#/definitions/domain.Object'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total_count:
+        type: integer
+    type: object
+  domain.LoginRequest:
+    properties:
+      password:
+        example: pass123
+        type: string
+      username:
+        example: johndoe
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  domain.Object:
+    properties:
+      bucket:
+        $ref: '#/definitions/domain.Bucket'
+      bucket_id:
+        type: string
+      content_type:
+        type: string
+      created_at:
+        type: string
+      etag:
+        type: string
+      id:
+        type: string
+      is_latest:
+        type: boolean
+      key:
+        type: string
+      metadata:
+        type: string
+      size:
+        type: integer
+      storage_path:
+        type: string
+      updated_at:
+        type: string
+      version_id:
+        type: string
+    type: object
+  domain.RegisterRequest:
+    properties:
+      email:
+        example: johndoe@example.com
+        type: string
+      password:
+        example: pass123
+        minLength: 6
+        type: string
+      username:
+        example: johndoe
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  domain.UploadObjectResponse:
+    properties:
+      object:
+        $ref: '#/definitions/domain.Object'
+      version_id:
+        type: string
+    type: object
+  domain.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@s3like.com
+    name: S3-Like API Support
+  description: A complete S3-compatible storage service with authentication, versioning,
+    and bucket management.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: S3-Like Storage API
+  version: "1.0"
+paths:
+  /api/v1/buckets:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all buckets owned by the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of buckets
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List user buckets
+      tags:
+      - buckets
+    post:
+      consumes:
+      - application/json
+      description: Create a new storage bucket
+      parameters:
+      - description: Bucket creation details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateBucketRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Bucket created successfully
+          schema:
+            $ref: '#/definitions/domain.Bucket'
+        "400":
+          description: Invalid request or bucket already exists
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new bucket
+      tags:
+      - buckets
+  /api/v1/buckets/{bucket}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a bucket and all its contents
+      parameters:
+      - description: Bucket name
+        in: path
+        name: bucket
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Bucket deleted successfully
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Bucket not found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a bucket
+      tags:
+      - buckets
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific bucket
+      parameters:
+      - description: Bucket name
+        in: path
+        name: bucket
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Bucket details
+          schema:
+            $ref: '#/definitions/domain.Bucket'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Bucket not found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get bucket details
+      tags:
+      - buckets
+  /api/v1/buckets/{bucket}/objects:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of objects in a bucket
+      parameters:
+      - description: Bucket name
+        in: path
+        name: bucket
+        required: true
+        type: string
+      - description: Object key prefix filter
+        in: query
+        name: prefix
+        type: string
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Page size (default: 50, max: 1000)'
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of objects
+          schema:
+            $ref: '#/definitions/domain.ListObjectsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Bucket not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List objects in a bucket
+      tags:
+      - objects
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a file to a specific bucket with optional metadata
+      parameters:
+      - description: Bucket name
+        in: path
+        name: bucket
+        required: true
+        type: string
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Object key (if not provided, filename will be used)
+        in: formData
+        name: key
+        type: string
+      - description: JSON string with custom metadata (e.g., {\
+        in: formData
+        name: metadata
+        type: string
+      - description: Content type override
+        in: formData
+        name: content-type
+        type: string
+      - description: File description
+        in: formData
+        name: description
+        type: string
+      - description: Comma-separated tags
+        in: formData
+        name: tags
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: File uploaded successfully
+          schema:
+            $ref: '#/definitions/domain.UploadObjectResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Bucket not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload a file
+      tags:
+      - objects
+  /api/v1/buckets/{bucket}/objects/{key}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete the latest version of an object from a bucket
+      parameters:
+      - description: Bucket name
+        in: path
+        name: bucket
+        required: true
+        type: string
+      - description: Object key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Object deleted successfully
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Object or bucket not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete an object
+      tags:
+      - objects
+    get:
+      consumes:
+      - application/json
+      description: Download the latest version of a file from a bucket
+      parameters:
+      - description: Bucket name
+        in: path
+        name: bucket
+        required: true
+        type: string
+      - description: Object key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: File content
+          schema:
+            type: file
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Object or bucket not found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Download a file
+      tags:
+      - objects
+  /api/v1/buckets/{bucket}/objects/{key}/versions:
+    get:
+      consumes:
+      - application/json
+      description: Get all versions of a specific object
+      parameters:
+      - description: Bucket name
+        in: path
+        name: bucket
+        required: true
+        type: string
+      - description: Object key
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of object versions
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Bucket not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List all versions of an object
+      tags:
+      - objects
+  /api/v1/buckets/{bucket}/objects/{key}/versions/{version}:
+    get:
+      consumes:
+      - application/json
+      description: Download a specific version of a file from a bucket
+      parameters:
+      - description: Bucket name
+        in: path
+        name: bucket
+        required: true
+        type: string
+      - description: Object key
+        in: path
+        name: key
+        required: true
+        type: string
+      - description: Version ID
+        in: path
+        name: version
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: File content
+          schema:
+            type: file
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Object version or bucket not found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Download a specific version of a file
+      tags:
+      - objects
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            $ref: '#/definitions/domain.AuthResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties: true
+            type: object
+      summary: User login
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user account
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Registration successful
+          schema:
+            $ref: '#/definitions/domain.AuthResponse'
+        "400":
+          description: Invalid request or user already exists
+          schema:
+            additionalProperties: true
+            type: object
+      summary: User registration
+      tags:
+      - auth
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Check if the service is running
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service is healthy
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Health Check
+      tags:
+      - health
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

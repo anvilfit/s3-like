@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"s3-like/internal/domain"
 
 	"github.com/google/uuid"
@@ -29,7 +30,10 @@ func (r *userRepository) GetByUsername(username string) (*domain.User, error) {
 }
 
 func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {
+	fmt.Println(id)
+
 	var user domain.User
+
 	err := r.db.Where("id = ?", id).First(&user).Error
 	if err != nil {
 		return nil, err

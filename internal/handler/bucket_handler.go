@@ -18,6 +18,18 @@ func NewBucketHandler(bucketUseCase domain.BucketUseCase) *BucketHandler {
 	}
 }
 
+// CreateBucket godoc
+// @Summary Create a new bucket
+// @Description Create a new storage bucket
+// @Tags buckets
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body domain.CreateBucketRequest true "Bucket creation details"
+// @Success 201 {object} domain.Bucket "Bucket created successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid request or bucket already exists"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Router /api/v1/buckets [post]
 func (h *BucketHandler) CreateBucket(c *gin.Context) {
 	userID := c.MustGet("user_id").(uuid.UUID)
 
@@ -36,6 +48,18 @@ func (h *BucketHandler) CreateBucket(c *gin.Context) {
 	c.JSON(http.StatusCreated, bucket)
 }
 
+// GetBucket godoc
+// @Summary Get bucket details
+// @Description Get details of a specific bucket
+// @Tags buckets
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param bucket path string true "Bucket name"
+// @Success 200 {object} domain.Bucket "Bucket details"
+// @Failure 404 {object} map[string]interface{} "Bucket not found"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Router /api/v1/buckets/{bucket} [get]
 func (h *BucketHandler) GetBucket(c *gin.Context) {
 	userID := c.MustGet("user_id").(uuid.UUID)
 	bucketName := c.Param("bucket")
@@ -49,6 +73,17 @@ func (h *BucketHandler) GetBucket(c *gin.Context) {
 	c.JSON(http.StatusOK, bucket)
 }
 
+// ListBuckets godoc
+// @Summary List user buckets
+// @Description Get list of all buckets owned by the authenticated user
+// @Tags buckets
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "List of buckets"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/buckets [get]
 func (h *BucketHandler) ListBuckets(c *gin.Context) {
 	userID := c.MustGet("user_id").(uuid.UUID)
 
@@ -58,9 +93,25 @@ func (h *BucketHandler) ListBuckets(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"buckets": buckets})
+	c.JSON(http.StatusOK, gin.H{
+		"buckets": buckets,
+		"count":   len(buckets),
+	})
 }
 
+// DeleteBucket godoc
+// @Summary Delete a bucket
+// @Description Delete a bucket and all its contents
+// @Tags buckets
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param bucket path string true "Bucket name"
+// @Success 204 "Bucket deleted successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid request"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 404 {object} map[string]interface{} "Bucket not found"
+// @Router /api/v1/buckets/{bucket} [delete]
 func (h *BucketHandler) DeleteBucket(c *gin.Context) {
 	userID := c.MustGet("user_id").(uuid.UUID)
 	bucketName := c.Param("bucket")
@@ -70,5 +121,5 @@ func (h *BucketHandler) DeleteBucket(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusNoContent, nil)
+	c.Status(http.StatusNoContent)
 }

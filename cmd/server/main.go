@@ -1,7 +1,27 @@
+// @title S3-Like Storage API
+// @version 1.0
+// @description A complete S3-compatible storage service with authentication, versioning, and bucket management.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name S3-Like API Support
+// @contact.email support@s3like.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
+
 package main
 
 import (
 	"log"
+	"s3-like/docs"
 	"s3-like/internal/config"
 	"s3-like/internal/database"
 	"s3-like/internal/handler"
@@ -11,6 +31,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -21,6 +43,10 @@ func main() {
 
 	// Load configuration
 	cfg := config.Load()
+
+	// Initialize Swagger
+	docs.SwaggerInfo.Host = "localhost:" + cfg.Server.Port
+	docs.SwaggerInfo.BasePath = "/"
 
 	// Initialize database
 	db, err := database.NewPostgresConnection(cfg.Database)
@@ -46,7 +72,7 @@ func main() {
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authUseCase)
 	bucketHandler := handler.NewBucketHandler(bucketUseCase)
-	objectHandler := handler.NewObjectHandler(objectUseCase)
+	objectHandler := handler.NewObjectHandler(objectUseCase, bucketUseCase)
 
 	// Setup router
 	router := gin.Default()
@@ -61,6 +87,7 @@ func main() {
 
 	// Start server
 	log.Printf("Server starting on port %s", cfg.Server.Port)
+	log.Printf("Swagger UI available at: http://localhost:%s/swagger/index.html", cfg.Server.Port)
 	if err := router.Run(":" + cfg.Server.Port); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
@@ -73,6 +100,9 @@ func setupRoutes(
 	objectHandler *handler.ObjectHandler,
 	jwtSecret string,
 ) {
+	// Swagger documentation
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// Public routes
 	auth := router.Group("/auth")
 	{
@@ -98,15 +128,28 @@ func setupRoutes(
 		{
 			objects.GET("", objectHandler.ListObjects)
 			objects.POST("", objectHandler.UploadObject)
-			objects.GET("/*key", objectHandler.GetObject)
-			objects.DELETE("/*key", objectHandler.DeleteObject)
-			objects.GET("/*key/versions", objectHandler.ListObjectVersions)
-			objects.GET("/*key/versions/:version", objectHandler.GetObjectVersion)
+			objects.GET("/:key", objectHandler.GetObject)
+			objects.DELETE("/:key", objectHandler.DeleteObject)
+			objects.GET("/:key/versions", objectHandler.ListObjectVersions)
+			objects.GET("/:key/versions/:version", objectHandler.GetObjectVersion)
 		}
 	}
 
 	// Health check
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
+	router.GET("/health", healthCheck)
+}
+
+// @Summary Health Check
+// @Description Check if the service is running
+// @Tags health
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Service is healthy"
+// @Router /health [get]
+func healthCheck(c *gin.Context) {
+	c.JSON(200, gin.H{
+		"status":  "ok",
+		"service": "s3-like-storage",
+		"version": "1.0.0",
 	})
 }

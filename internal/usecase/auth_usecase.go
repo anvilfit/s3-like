@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+	"fmt"
 	"s3-like/internal/domain"
 	"time"
 
@@ -70,7 +71,9 @@ func (uc *authUseCase) Register(req *domain.RegisterRequest) (*domain.AuthRespon
 	}, nil
 }
 
-func (uc *authUseCase) ValidateToken(tokenString string) (*domain.User, error) {
+func (uc *authUseCase) ValidateToken(tokenString string) (*uuid.UUID, error) {
+	fmt.Println(tokenString)
+
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		return []byte(uc.jwtSecret), nil
 	})
@@ -94,7 +97,7 @@ func (uc *authUseCase) ValidateToken(tokenString string) (*domain.User, error) {
 		return nil, errors.New("invalid user ID format")
 	}
 
-	return uc.userRepo.GetByID(userID)
+	return &userID, nil
 }
 
 func (uc *authUseCase) generateToken(userID uuid.UUID) (string, error) {
