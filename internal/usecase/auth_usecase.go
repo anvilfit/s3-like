@@ -2,24 +2,19 @@ package usecase
 
 import (
 	"errors"
-	"fmt"
 	"s3-like/internal/domain"
-	"time"
+	"s3-like/internal/utils"
 
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type authUseCase struct {
-	userRepo  domain.UserRepository
-	jwtSecret string
+	userRepo domain.UserRepository
 }
 
-func NewAuthUseCase(userRepo domain.UserRepository, jwtSecret string) domain.AuthUseCase {
+func NewAuthUseCase(userRepo domain.UserRepository) domain.AuthUseCase {
 	return &authUseCase{
-		userRepo:  userRepo,
-		jwtSecret: jwtSecret,
+		userRepo: userRepo,
 	}
 }
 
@@ -33,7 +28,7 @@ func (uc *authUseCase) Login(username, password string) (*domain.AuthResponse, e
 		return nil, errors.New("invalid credentials")
 	}
 
-	token, err := uc.generateToken(user.ID)
+	token, err := utils.GenerateToken(user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +55,7 @@ func (uc *authUseCase) Register(req *domain.RegisterRequest) (*domain.AuthRespon
 		return nil, err
 	}
 
-	token, err := uc.generateToken(user.ID)
+	token, err := utils.GenerateToken(user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,43 +64,4 @@ func (uc *authUseCase) Register(req *domain.RegisterRequest) (*domain.AuthRespon
 		Token: token,
 		User:  *user,
 	}, nil
-}
-
-func (uc *authUseCase) ValidateToken(tokenString string) (*uuid.UUID, error) {
-	fmt.Println(tokenString)
-
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
-		return []byte(uc.jwtSecret), nil
-	})
-
-	if err != nil || !token.Valid {
-		return nil, errors.New("invalid token")
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil, errors.New("invalid token claims")
-	}
-
-	userIDStr, ok := claims["user_id"].(string)
-	if !ok {
-		return nil, errors.New("invalid user ID in token")
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return nil, errors.New("invalid user ID format")
-	}
-
-	return &userID, nil
-}
-
-func (uc *authUseCase) generateToken(userID uuid.UUID) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id": userID.String(),
-		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(), // 7 days
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(uc.jwtSecret))
 }

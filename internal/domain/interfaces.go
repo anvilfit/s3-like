@@ -38,7 +38,6 @@ type ObjectRepository interface {
 type AuthUseCase interface {
 	Login(username, password string) (*AuthResponse, error)
 	Register(req *RegisterRequest) (*AuthResponse, error)
-	ValidateToken(token string) (*uuid.UUID, error)
 }
 
 type BucketUseCase interface {

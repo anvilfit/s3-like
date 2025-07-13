@@ -65,7 +65,7 @@ func main() {
 	objectRepo := repository.NewObjectRepository(db)
 
 	// Initialize use cases
-	authUseCase := usecase.NewAuthUseCase(userRepo, cfg.JWT.Secret)
+	authUseCase := usecase.NewAuthUseCase(userRepo)
 	bucketUseCase := usecase.NewBucketUseCase(bucketRepo)
 	objectUseCase := usecase.NewObjectUseCase(objectRepo, cfg.Storage.BasePath)
 

@@ -33,8 +33,10 @@ type StorageConfig struct {
 	BasePath string
 }
 
+var Cfg Config
+
 func Load() *Config {
-	return &Config{
+	Cfg = Config{
 		Server: ServerConfig{
 			Port: getEnv("SERVER_PORT", "8080"),
 		},
@@ -53,6 +55,8 @@ func Load() *Config {
 			BasePath: getEnv("STORAGE_PATH", "./storage"),
 		},
 	}
+
+	return &Cfg
 }
 
 func getEnv(key, defaultValue string) string {
