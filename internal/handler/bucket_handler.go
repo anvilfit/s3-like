@@ -64,7 +64,7 @@ func (h *BucketHandler) GetBucket(c *gin.Context) {
 	userID := c.MustGet("user_id").(uuid.UUID)
 	bucketName := c.Param("bucket")
 
-	bucket, err := h.bucketUseCase.GetBucket(userID, bucketName)
+	bucket, err := h.bucketUseCase.GetBucket(&userID, bucketName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return

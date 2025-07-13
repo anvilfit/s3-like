@@ -42,7 +42,7 @@ type AuthUseCase interface {
 
 type BucketUseCase interface {
 	CreateBucket(userID uuid.UUID, req *CreateBucketRequest) (*Bucket, error)
-	GetBucket(userID uuid.UUID, name string) (*Bucket, error)
+	GetBucket(userID *uuid.UUID, name string) (*Bucket, error)
 	ListBuckets(userID uuid.UUID) ([]Bucket, error)
 	DeleteBucket(userID uuid.UUID, name string) error
 }

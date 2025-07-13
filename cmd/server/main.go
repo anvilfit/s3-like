@@ -128,12 +128,14 @@ func setupRoutes(
 		{
 			objects.GET("", objectHandler.ListObjects)
 			objects.POST("", objectHandler.UploadObject)
-			objects.GET("/:key", objectHandler.GetObject)
+			// objects.GET("/:key", objectHandler.GetObject)
 			objects.DELETE("/:key", objectHandler.DeleteObject)
 			objects.GET("/:key/versions", objectHandler.ListObjectVersions)
 			objects.GET("/:key/versions/:version", objectHandler.GetObjectVersion)
 		}
 	}
+
+	router.GET("/api/v1/buckets/:bucket/objects/:key", objectHandler.GetObject)
 
 	// Health check
 	router.GET("/health", healthCheck)

@@ -49,7 +49,7 @@ func (h *ObjectHandler) UploadObject(c *gin.Context) {
 	bucketName := c.Param("bucket")
 
 	// Get bucket
-	bucket, err := h.bucketUseCase.GetBucket(userID, bucketName)
+	bucket, err := h.bucketUseCase.GetBucket(&userID, bucketName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "bucket not found"})
 		return
@@ -74,7 +74,7 @@ func (h *ObjectHandler) UploadObject(c *gin.Context) {
 
 	// Get JSON metadata if provided
 	if metadataJSON := c.PostForm("metadata"); metadataJSON != "" {
-		var jsonMetadata map[string]interface{}
+		var jsonMetadata map[string]any
 		if err := json.Unmarshal([]byte(metadataJSON), &jsonMetadata); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid metadata JSON format"})
 			return
@@ -135,12 +135,21 @@ func (h *ObjectHandler) UploadObject(c *gin.Context) {
 // @Failure 404 {object} map[string]interface{} "Object or bucket not found"
 // @Router /api/v1/buckets/{bucket}/objects/{key} [get]
 func (h *ObjectHandler) GetObject(c *gin.Context) {
-	userID := c.MustGet("user_id").(uuid.UUID)
+	userID, userExists := c.Get("user_id")
 	bucketName := c.Param("bucket")
 	key := strings.TrimPrefix(c.Param("key"), "/")
 
+	var userIDuuid *uuid.UUID
+
+	if userExists {
+		if strID, ok := userID.(string); ok && strID != "" {
+			parsedID, _ := uuid.Parse(strID)
+			userIDuuid = &parsedID
+		}
+	}
+
 	// Get bucket
-	bucket, err := h.bucketUseCase.GetBucket(userID, bucketName)
+	bucket, err := h.bucketUseCase.GetBucket(userIDuuid, bucketName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "bucket not found"})
 		return
@@ -162,7 +171,7 @@ func (h *ObjectHandler) GetObject(c *gin.Context) {
 
 	// Add metadata to headers if available
 	if object.Metadata != "" {
-		var metadata map[string]interface{}
+		var metadata map[string]any
 		if err := json.Unmarshal([]byte(object.Metadata), &metadata); err == nil {
 			for k, v := range metadata {
 				headerKey := "X-Object-Meta-" + strings.ReplaceAll(k, "_", "-")
@@ -196,7 +205,7 @@ func (h *ObjectHandler) GetObjectVersion(c *gin.Context) {
 	versionID := c.Param("version")
 
 	// Get bucket
-	bucket, err := h.bucketUseCase.GetBucket(userID, bucketName)
+	bucket, err := h.bucketUseCase.GetBucket(&userID, bucketName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "bucket not found"})
 		return
@@ -218,7 +227,7 @@ func (h *ObjectHandler) GetObjectVersion(c *gin.Context) {
 
 	// Add metadata to headers if available
 	if object.Metadata != "" {
-		var metadata map[string]interface{}
+		var metadata map[string]any
 		if err := json.Unmarshal([]byte(object.Metadata), &metadata); err == nil {
 			for k, v := range metadata {
 				headerKey := "X-Object-Meta-" + strings.ReplaceAll(k, "_", "-")
@@ -261,7 +270,7 @@ func (h *ObjectHandler) ListObjects(c *gin.Context) {
 	}
 
 	// Get bucket
-	bucket, err := h.bucketUseCase.GetBucket(userID, bucketName)
+	bucket, err := h.bucketUseCase.GetBucket(&userID, bucketName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "bucket not found"})
 		return
@@ -296,7 +305,7 @@ func (h *ObjectHandler) ListObjectVersions(c *gin.Context) {
 	key := strings.TrimPrefix(c.Param("key"), "/")
 
 	// Get bucket
-	bucket, err := h.bucketUseCase.GetBucket(userID, bucketName)
+	bucket, err := h.bucketUseCase.GetBucket(&userID, bucketName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "bucket not found"})
 		return
@@ -336,7 +345,7 @@ func (h *ObjectHandler) DeleteObject(c *gin.Context) {
 	key := strings.TrimPrefix(c.Param("key"), "/")
 
 	// Get bucket
-	bucket, err := h.bucketUseCase.GetBucket(userID, bucketName)
+	bucket, err := h.bucketUseCase.GetBucket(&userID, bucketName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "bucket not found"})
 		return
