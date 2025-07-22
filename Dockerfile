@@ -28,6 +28,6 @@ COPY --from=builder /app/main .
 RUN mkdir -p /storage
 
 # Expose port
-EXPOSE 8090
+EXPOSE 9080
 
 CMD ["./main"]
