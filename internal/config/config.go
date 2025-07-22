@@ -1,6 +1,8 @@
 package config
 
 import (
+	"log"
+	"net"
 	"os"
 	"strconv"
 )
@@ -13,6 +15,7 @@ type Config struct {
 }
 
 type ServerConfig struct {
+	IP   string
 	Port string
 }
 
@@ -39,6 +42,7 @@ func Load() *Config {
 	Cfg = Config{
 		Server: ServerConfig{
 			Port: getEnv("SERVER_PORT", "9080"),
+			IP:   getOutboundIP(),
 		},
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
@@ -73,4 +77,16 @@ func getEnvAsInt(key string, defaultValue int) int {
 		}
 	}
 	return defaultValue
+}
+
+func getOutboundIP() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP.String()
 }

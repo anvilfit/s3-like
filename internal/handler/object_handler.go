@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"s3-like/internal/domain"
+	"s3-like/internal/utils"
 	"strconv"
 	"strings"
 
@@ -66,7 +67,7 @@ func (h *ObjectHandler) UploadObject(c *gin.Context) {
 	// Get key from form or use filename
 	key := c.PostForm("key")
 	if key == "" {
-		key = header.Filename
+		key = utils.SanitizeFilename(header.Filename)
 	}
 
 	// Parse metadata from form

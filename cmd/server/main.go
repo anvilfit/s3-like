@@ -9,7 +9,7 @@
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
 
-// @host localhost:8080
+// @host localhost:9080
 // @BasePath /
 
 // @securityDefinitions.apikey BearerAuth
@@ -44,8 +44,10 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 
+	serverAddress := cfg.Server.IP + ":" + cfg.Server.Port
+
 	// Initialize Swagger
-	docs.SwaggerInfo.Host = "localhost:" + cfg.Server.Port
+	docs.SwaggerInfo.Host = serverAddress
 	docs.SwaggerInfo.BasePath = "/"
 
 	// Initialize database
@@ -87,7 +89,7 @@ func main() {
 
 	// Start server
 	log.Printf("Server starting on port %s", cfg.Server.Port)
-	log.Printf("Swagger UI available at: http://localhost:%s/swagger/index.html", cfg.Server.Port)
+	log.Printf("Swagger UI available at: http://%s/swagger/index.html", serverAddress)
 	if err := router.Run(":" + cfg.Server.Port); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}

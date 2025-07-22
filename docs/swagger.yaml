@@ -131,7 +131,7 @@ definitions:
       username:
         type: string
     type: object
-host: localhost:8080
+host: localhost:9080
 info:
   contact:
     email: support@s3like.com
