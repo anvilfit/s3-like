@@ -58,7 +58,7 @@ func (uc *objectUseCase) UploadObject(bucketID uuid.UUID, key string, file multi
 	var metadataJSON string
 	if metadata != nil && len(metadata) > 0 {
 		// Add system metadata
-		systemMetadata := make(map[string]interface{})
+		systemMetadata := make(map[string]any)
 		for k, v := range metadata {
 			systemMetadata[k] = v
 		}
@@ -76,7 +76,7 @@ func (uc *objectUseCase) UploadObject(bucketID uuid.UUID, key string, file multi
 		metadataJSON = string(metadataBytes)
 	} else {
 		// Default metadata if none provided
-		defaultMetadata := map[string]interface{}{
+		defaultMetadata := map[string]any{
 			"upload_time":       time.Now().UTC().Format(time.RFC3339),
 			"original_filename": header.Filename,
 			"file_size":         size,

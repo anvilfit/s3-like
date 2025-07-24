@@ -2,7 +2,13 @@ basePath: /
 definitions:
   domain.AuthResponse:
     properties:
-      token:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      token_type:
         type: string
       user:
         $ref: '#/definitions/domain.User'
@@ -29,13 +35,10 @@ definitions:
   domain.CreateBucketRequest:
     properties:
       name:
-        example: bucket-example
         type: string
       public:
-        example: true
         type: boolean
       versioning:
-        example: true
         type: boolean
     required:
     - name
@@ -94,17 +97,21 @@ definitions:
       version_id:
         type: string
     type: object
+  domain.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
   domain.RegisterRequest:
     properties:
       email:
-        example: johndoe@example.com
         type: string
       password:
-        example: pass123
         minLength: 6
         type: string
       username:
-        example: johndoe
         type: string
     required:
     - email
@@ -560,7 +567,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Authenticate user and return JWT token
+      description: Authenticate user and return access token and refresh token
       parameters:
       - description: Login credentials
         in: body
@@ -588,11 +595,102 @@ paths:
       summary: User login
       tags:
       - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revoke refresh token (logout)
+      parameters:
+      - description: Refresh token to revoke
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: User logout
+      tags:
+      - auth
+  /auth/logout-all:
+    post:
+      consumes:
+      - application/json
+      description: Revoke all refresh tokens for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout from all devices successful
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Logout from all devices
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Use refresh token to get a new access token and refresh token pair
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token refreshed successfully
+          schema:
+            $ref: '#/definitions/domain.AuthResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Invalid or expired refresh token
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Refresh access token
+      tags:
+      - auth
   /auth/register:
     post:
       consumes:
       - application/json
-      description: Register a new user account
+      description: Register a new user account and return access token and refresh
+        token
       parameters:
       - description: Registration details
         in: body

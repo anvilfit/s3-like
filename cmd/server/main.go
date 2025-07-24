@@ -64,10 +64,11 @@ func main() {
 	// Initialize repositories
 	userRepo := repository.NewUserRepository(db)
 	bucketRepo := repository.NewBucketRepository(db)
+	refreshTokenRepo := repository.NewRefreshTokenRepository(db)
 	objectRepo := repository.NewObjectRepository(db)
 
 	// Initialize use cases
-	authUseCase := usecase.NewAuthUseCase(userRepo)
+	authUseCase := usecase.NewAuthUseCase(userRepo, refreshTokenRepo, cfg.JWT.Secret)
 	bucketUseCase := usecase.NewBucketUseCase(bucketRepo)
 	objectUseCase := usecase.NewObjectUseCase(objectRepo, cfg.Storage.BasePath)
 
@@ -116,6 +117,12 @@ func setupRoutes(
 	api := router.Group("/api/v1")
 	api.Use(middleware.JWTAuth(jwtSecret))
 	{
+		// Auth protected routes
+		auth := api.Group("/auth")
+		{
+			auth.POST("/logout-all", authHandler.LogoutAll)
+		}
+
 		// Bucket routes
 		buckets := api.Group("/buckets")
 		{

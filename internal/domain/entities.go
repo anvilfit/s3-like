@@ -16,6 +16,17 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type RefreshToken struct {
+	ID        uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	Token     string    `json:"token" gorm:"unique;not null;index"`
+	UserID    uuid.UUID `json:"user_id" gorm:"type:uuid;not null;index"`
+	User      User      `json:"user" gorm:"foreignKey:UserID"`
+	ExpiresAt time.Time `json:"expires_at" gorm:"not null;index"`
+	IsRevoked bool      `json:"is_revoked" gorm:"default:false;index"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type Bucket struct {
 	ID         uuid.UUID      `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
 	Name       string         `json:"name" gorm:"unique;not null"`
@@ -52,9 +63,9 @@ type ObjectVersion struct {
 
 // Request/Response DTOs
 type CreateBucketRequest struct {
-	Name       string `json:"name" binding:"required" example:"bucket-example"`
-	Public     bool   `json:"public" example:"true"`
-	Versioning bool   `json:"versioning" example:"true"`
+	Name       string `json:"name" binding:"required"`
+	Public     bool   `json:"public"`
+	Versioning bool   `json:"versioning"`
 }
 
 type LoginRequest struct {
@@ -63,14 +74,21 @@ type LoginRequest struct {
 }
 
 type RegisterRequest struct {
-	Username string `json:"username" binding:"required" example:"johndoe"`
-	Email    string `json:"email" binding:"required,email" example:"johndoe@example.com"`
-	Password string `json:"password" binding:"required,min=6" example:"pass123"`
+	Username string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
 type AuthResponse struct {
-	Token string `json:"token"`
-	User  User   `json:"user"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int    `json:"expires_in"`
+	User         User   `json:"user"`
 }
 
 type ListObjectsResponse struct {

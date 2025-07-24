@@ -14,6 +14,14 @@ type UserRepository interface {
 	GetByID(id uuid.UUID) (*User, error)
 }
 
+type RefreshTokenRepository interface {
+	Create(token *RefreshToken) error
+	GetByToken(token string) (*RefreshToken, error)
+	RevokeToken(token string) error
+	RevokeAllUserTokens(userID uuid.UUID) error
+	CleanupExpiredTokens() error
+}
+
 type BucketRepository interface {
 	Create(bucket *Bucket) error
 	GetByName(name string) (*Bucket, error)
@@ -38,11 +46,15 @@ type ObjectRepository interface {
 type AuthUseCase interface {
 	Login(username, password string) (*AuthResponse, error)
 	Register(req *RegisterRequest) (*AuthResponse, error)
+	RefreshToken(refreshToken string) (*AuthResponse, error)
+	ValidateToken(token string) (*User, error)
+	RevokeRefreshToken(refreshToken string) error
+	RevokeAllUserTokens(userID uuid.UUID) error
 }
 
 type BucketUseCase interface {
 	CreateBucket(userID uuid.UUID, req *CreateBucketRequest) (*Bucket, error)
-	GetBucket(userID *uuid.UUID, name string) (*Bucket, error)
+	GetBucket(userID uuid.UUID, name string) (*Bucket, error)
 	ListBuckets(userID uuid.UUID) ([]Bucket, error)
 	DeleteBucket(userID uuid.UUID, name string) error
 }

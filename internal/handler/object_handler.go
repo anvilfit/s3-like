@@ -50,7 +50,7 @@ func (h *ObjectHandler) UploadObject(c *gin.Context) {
 	bucketName := c.Param("bucket")
 
 	// Get bucket
-	bucket, err := h.bucketUseCase.GetBucket(&userID, bucketName)
+	bucket, err := h.bucketUseCase.GetBucket(userID, bucketName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "bucket not found"})
 		return
@@ -140,12 +140,12 @@ func (h *ObjectHandler) GetObject(c *gin.Context) {
 	bucketName := c.Param("bucket")
 	key := strings.TrimPrefix(c.Param("key"), "/")
 
-	var userIDuuid *uuid.UUID
+	var userIDuuid uuid.UUID
 
 	if userExists {
 		if strID, ok := userID.(string); ok && strID != "" {
 			parsedID, _ := uuid.Parse(strID)
-			userIDuuid = &parsedID
+			userIDuuid = parsedID
 		}
 	}
 
@@ -206,7 +206,7 @@ func (h *ObjectHandler) GetObjectVersion(c *gin.Context) {
 	versionID := c.Param("version")
 
 	// Get bucket
-	bucket, err := h.bucketUseCase.GetBucket(&userID, bucketName)
+	bucket, err := h.bucketUseCase.GetBucket(userID, bucketName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "bucket not found"})
 		return
@@ -271,7 +271,7 @@ func (h *ObjectHandler) ListObjects(c *gin.Context) {
 	}
 
 	// Get bucket
-	bucket, err := h.bucketUseCase.GetBucket(&userID, bucketName)
+	bucket, err := h.bucketUseCase.GetBucket(userID, bucketName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "bucket not found"})
 		return
@@ -306,7 +306,7 @@ func (h *ObjectHandler) ListObjectVersions(c *gin.Context) {
 	key := strings.TrimPrefix(c.Param("key"), "/")
 
 	// Get bucket
-	bucket, err := h.bucketUseCase.GetBucket(&userID, bucketName)
+	bucket, err := h.bucketUseCase.GetBucket(userID, bucketName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "bucket not found"})
 		return
@@ -346,7 +346,7 @@ func (h *ObjectHandler) DeleteObject(c *gin.Context) {
 	key := strings.TrimPrefix(c.Param("key"), "/")
 
 	// Get bucket
-	bucket, err := h.bucketUseCase.GetBucket(&userID, bucketName)
+	bucket, err := h.bucketUseCase.GetBucket(userID, bucketName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "bucket not found"})
 		return

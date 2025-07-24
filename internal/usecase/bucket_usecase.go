@@ -37,14 +37,14 @@ func (uc *bucketUseCase) CreateBucket(userID uuid.UUID, req *domain.CreateBucket
 	return bucket, nil
 }
 
-func (uc *bucketUseCase) GetBucket(userID *uuid.UUID, name string) (*domain.Bucket, error) {
+func (uc *bucketUseCase) GetBucket(userID uuid.UUID, name string) (*domain.Bucket, error) {
 	bucket, err := uc.bucketRepo.GetByName(name)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check if user owns the bucket or if it's public
-	if &bucket.UserID != userID && !bucket.Public {
+	if bucket.UserID != userID && !bucket.Public {
 		return nil, errors.New("access denied")
 	}
 
