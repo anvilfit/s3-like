@@ -1,43 +1,17 @@
-version: "3.8"
-
 services:
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: s3like
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - s3like-network
-
   s3like:
     build: .
     ports:
-      - "8080:8080"
+      - "9080:9080"
     environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=password
-      - DB_NAME=s3like
-      - DB_SSLMODE=disable
-      - JWT_SECRET=your-super-secret-jwt-key
-      - STORAGE_PATH=/storage
-      - SERVER_PORT=8080
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_SSLMODE=${DB_SSLMODE}
+      - JWT_SECRET=${JWT_SECRET}
+      - STORAGE_PATH=${STORAGE_PATH}
+      - SERVER_PORT=${SERVER_PORT}
     volumes:
       - ./storage:/storage
-    depends_on:
-      - postgres
-    networks:
-      - s3like-network
-
-volumes:
-  postgres_data:
-
-networks:
-  s3like-network:
-    driver: bridge
