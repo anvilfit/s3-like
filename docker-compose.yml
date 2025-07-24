@@ -1,6 +1,10 @@
 services:
   s3like:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: "s3like"
+    image: "s3like:latest"
     ports:
       - "9080:9080"
     environment:
